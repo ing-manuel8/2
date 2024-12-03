@@ -125,6 +125,69 @@
             });
         }
 
+        // Función para obtener y mostrar los mensajes de Firebase
+        function displayMessages() {
+            const messagesRef = ref(database, 'messages');
+            
+            get(messagesRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const proximoApagado = data.proximo_apagado || "No disponible";
+                    const proximoEncendido = data.proximo_encendido || "No disponible";
+
+                    // Mostrar los valores en la página
+                    document.getElementById('proximoApagado').textContent = `Próximo apagado: ${proximoApagado}`;
+                    document.getElementById('proximoEncendido').textContent = `Próximo encendido: ${proximoEncendido}`;
+                } else {
+                    console.log("No hay mensajes disponibles en Firebase.");
+                }
+            }).catch((error) => {
+                console.error('Error al obtener los mensajes:', error);
+            });
+        }
+
+        // Función para guardar el historial en Firebase
+        function saveHistory(value) {
+            const { day, time } = getFormattedDate();
+            const historyRef = ref(database, 'buttonHistory/' + (value === 0 ? 'zero' : 'one'));
+            
+            // Limitar a 10 registros
+            limitRecords('buttonHistory/' + (value === 0 ? 'zero' : 'one'));
+
+            // Usamos `push` para crear un nuevo nodo único en Firebase
+            push(historyRef, {
+                value: value,
+                date: day,
+                time: time
+            });
+        }
+
+        // Función para obtener el estado de 'ledStatus' y actualizar el botón
+        function updateButtonBasedOnLedStatus() {
+            const ledStatusRef = ref(database, 'ledStatus');
+            const toggleButton = document.getElementById('toggleButton');
+            const statusText = document.getElementById('statusText');  // Cambio: texto en lugar de imagen
+
+            get(ledStatusRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const ledStatus = snapshot.val();
+
+                    // Cambiar el texto del botón y el estado del LED
+                    if (ledStatus === 1) {
+                        toggleButton.textContent = 'Apagar';
+                        statusText.textContent = 'El LED está Prendido';  // Texto indicando el estado
+                    } else {
+                        toggleButton.textContent = 'Encender';
+                        statusText.textContent = 'El LED está Apagado';  // Texto indicando el estado
+                    }
+                } else {
+                    console.log("No se encontró el estado del LED en Firebase.");
+                }
+            }).catch((error) => {
+                console.error('Error al obtener el estado del LED:', error);
+            });
+        }
+
         // Obtén el botón del DOM
         const toggleButton = document.getElementById('toggleButton');
         const deleteButton = document.getElementById('deleteButton');
@@ -138,21 +201,8 @@
             const buttonRef = ref(database, 'ledStatus');
             set(buttonRef, value);
 
-            // Obtener la fecha y la hora actuales
-            const { day, time } = getFormattedDate();
-
-            // Crear una referencia de historial separada para el valor (0 o 1)
-            const historyRef = ref(database, 'buttonHistory/' + (value === 0 ? 'zero' : 'one'));
-
-            // Limitar los registros a 10
-            limitRecords('buttonHistory/' + (value === 0 ? 'zero' : 'one'));
-
-            // Usamos `push` para crear un nuevo nodo único en Firebase
-            push(historyRef, {
-                value: value,
-                date: day,
-                time: time
-            });
+            // Guardar el historial cuando se cambia el valor del LED
+            saveHistory(value);
 
             // Cambiar el texto del botón para mostrar el estado
             toggleButton.textContent = value === 0 ? 'Encender' : 'Apagar';
@@ -165,11 +215,18 @@
         deleteButton.addEventListener('click', deleteAllHistories);
 
         // Mostrar el historial al cargar la página
-        window.onload = displayHistory;
+        window.onload = function() {
+            displayMessages();  // Mostrar los mensajes de Firebase
+            displayHistory();   // Mostrar el historial de botones
+            updateButtonBasedOnLedStatus();  // Actualizar el texto del botón y el estado del LED
+        };
     </script>
 </head>
 <body>
     <h1>Sistema de Riego Automatizado</h1>
+
+    <!-- Texto que indica si el LED está Prendido o Apagado -->
+    <p id="statusText">Cargando estado del LED...</p>
 
     <!-- Botones para controlar el sistema -->
     <div class="button-container">
@@ -187,6 +244,13 @@
     <div id="zeroHistory" aria-live="polite">
         <p>Cargando historial...</p>
     </div>
-</body>
 
+    <!-- Mostrar los mensajes de Firebase -->
+    <h2>Próximo apagado y encendido</h2>
+    <p id="proximoApagado">Cargando próximo apagado...</p>
+    <p id="proximoEncendido">Cargando próximo encendido...</p>
+</body>
 </html>
+
+
+
