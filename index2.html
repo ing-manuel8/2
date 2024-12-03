@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Firebase Button Example</title>
+    <script type="module">
+        // Configuración de Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getDatabase, ref, set, push, get, remove } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+
+        // Configura tu Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCH68ou5-6yxPrImHZw54iP281e6h3V1AQ",
+            authDomain: "esp32robot-165bc.firebaseapp.com",
+            databaseURL: "https://esp32robot-165bc-default-rtdb.firebaseio.com",
+            projectId: "esp32robot-165bc",
+            storageBucket: "esp32robot-165bc.firebasestorage.app",
+            messagingSenderId: "745604045901",
+            appId: "1:745604045901:web:01408c136e00fcd88ed004",
+            measurementId: "G-8135PSM8TY"
+        };
+
+        // Inicializa Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Estado inicial del valor (0 o 1)
+        let value = 0;
+
+        function getFormattedDate() {
+            const now = new Date();
+            const day = now.toLocaleDateString();  // Día en formato "dd/mm/yyyy"
+            const time = now.toLocaleTimeString(); // Hora en formato "hh:mm:ss AM/PM"
+            return { day, time };
+        }
+
+        // Función para mostrar los datos en la página, de más reciente a más antiguo
+        function displayHistory() {
+            // Referencia a los nodos de historial
+            const zeroRef = ref(database, 'buttonHistory/zero');
+            const oneRef = ref(database, 'buttonHistory/one');
+
+            // Mostrar los datos para el valor 0
+            get(zeroRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    let zeroHistory = '';
+                    const sortedZeroData = Object.entries(data).reverse();  // Ordenar de más reciente a más antiguo
+
+                    for (const [key, value] of sortedZeroData) {
+                        zeroHistory += `<p> Fecha: ${value.date}, Hora: ${value.time}</p>`;
+                    }
+                    document.getElementById('zeroHistory').innerHTML = zeroHistory;
+                } else {
+                    document.getElementById('zeroHistory').innerHTML = '<p>No hay historial para el valor 0.</p>';
+                }
+            }).catch((error) => {
+                console.error('Error al obtener los datos de "zero":', error);
+            });
+
+            // Mostrar los datos para el valor 1
+            get(oneRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    let oneHistory = '';
+                    const sortedOneData = Object.entries(data).reverse();  // Ordenar de más reciente a más antiguo
+
+                    for (const [key, value] of sortedOneData) {
+                        oneHistory += `<p> Fecha: ${value.date}, Hora: ${value.time}</p>`;
+                    }
+                    document.getElementById('oneHistory').innerHTML = oneHistory;
+                } else {
+                    document.getElementById('oneHistory').innerHTML = '<p>No hay historial para el valor 1.</p>';
+                }
+            }).catch((error) => {
+                console.error('Error al obtener los datos de "one":', error);
+            });
+        }
+
+        // Función para limitar a 10 los registros en Firebase
+        function limitRecords(historyRef) {
+            // Obtener los últimos 10 registros
+            const recordsRef = ref(database, historyRef);
+            get(recordsRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const records = Object.entries(data);
+
+                    // Si hay más de 10 registros, eliminar el más antiguo
+                    if (records.length >= 10) {
+                        const oldestKey = records[0][0]; // Obtener la clave del registro más antiguo
+                        const oldestRef = ref(database, historyRef + '/' + oldestKey);
+                        remove(oldestRef).then(() => {
+                            console.log('Registro más antiguo eliminado');
+                        }).catch((error) => {
+                            console.error('Error al eliminar el registro más antiguo:', error);
+                        });
+                    }
+                }
+            }).catch((error) => {
+                console.error('Error al obtener los registros para limitar:', error);
+            });
+        }
+
+        // Función para eliminar todos los historiales
+        function deleteAllHistories() {
+            const zeroRef = ref(database, 'buttonHistory/zero');
+            const oneRef = ref(database, 'buttonHistory/one');
+
+            // Eliminar los registros de los dos valores
+            remove(zeroRef).then(() => {
+                console.log('Historial de valores 0 eliminado');
+                document.getElementById('zeroHistory').innerHTML = '<p>No hay historial para el valor 0.</p>';
+            }).catch((error) => {
+                console.error('Error al eliminar el historial de valores 0:', error);
+            });
+
+            remove(oneRef).then(() => {
+                console.log('Historial de valores 1 eliminado');
+                document.getElementById('oneHistory').innerHTML = '<p>No hay historial para el valor 1.</p>';
+            }).catch((error) => {
+                console.error('Error al eliminar el historial de valores 1:', error);
+            });
+        }
+
+        // Obtén el botón del DOM
+        const toggleButton = document.getElementById('toggleButton');
+        const deleteButton = document.getElementById('deleteButton');
+
+        // Función para manejar el clic del botón
+        toggleButton.addEventListener('click', function() {
+            // Cambiar entre 0 y 1
+            value = (value === 0) ? 1 : 0;
+
+            // Guardar el valor en la base de datos de Firebase
+            const buttonRef = ref(database, 'ledStatus');
+            set(buttonRef, value);
+
+            // Obtener la fecha y la hora actuales
+            const { day, time } = getFormattedDate();
+
+            // Crear una referencia de historial separada para el valor (0 o 1)
+            const historyRef = ref(database, 'buttonHistory/' + (value === 0 ? 'zero' : 'one'));
+
+            // Limitar los registros a 10
+            limitRecords('buttonHistory/' + (value === 0 ? 'zero' : 'one'));
+
+            // Usamos `push` para crear un nuevo nodo único en Firebase
+            push(historyRef, {
+                value: value,
+                date: day,
+                time: time
+            });
+
+            // Cambiar el texto del botón para mostrar el estado
+            toggleButton.textContent = value === 0 ? 'Encender' : 'Apagar';
+
+            // Actualizar el historial mostrado en la página
+            displayHistory();
+        });
+
+        // Evento para el botón de eliminar todos los historiales
+        deleteButton.addEventListener('click', deleteAllHistories);
+
+        // Mostrar el historial al cargar la página
+        window.onload = displayHistory;
+    </script>
+</head>
+<body>
+    <h1>Sistema de Riego Automatizado</h1>
+
+    <!-- Botones para controlar el sistema -->
+    <div class="button-container">
+        <button id="toggleButton" aria-label="Controlar sistema de riego">Encender</button>
+        <button id="deleteButton" aria-label="Eliminar historial completo">Eliminar todos los historiales</button>
+    </div>
+
+    <!-- Historiales de eventos -->
+    <h2>Historial de encendido</h2>
+    <div id="oneHistory" aria-live="polite">
+        <p>Cargando historial...</p>
+    </div>
+
+    <h2>Historial de apagado</h2>
+    <div id="zeroHistory" aria-live="polite">
+        <p>Cargando historial...</p>
+    </div>
+</body>
+
+</html>

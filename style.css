@@ -1,0 +1,123 @@
+/* Estilo general de la página */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #4caf50, #81c784); /* Fondo degradado */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #ffffff;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* Estilo del contenedor principal */
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Sombra de texto */
+}
+
+h2 {
+    margin-top: 20px;
+    font-size: 1.5rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.button-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+button {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #ffffff;
+    background: linear-gradient(135deg, #007bff, #0056b3); /* Degradado en botones */
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+button:hover {
+    transform: scale(1.1); /* Efecto de escala */
+    background: linear-gradient(135deg, #0056b3, #004494);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Más sombra en hover */
+}
+
+#toggleButton {
+    background: linear-gradient(135deg, #4caf50, #388e3c); /* Verde para el botón toggle */
+}
+
+#toggleButton:hover {
+    background: linear-gradient(135deg, #388e3c, #2e7d32); /* Hover en verde */
+}
+
+/* Estilo para el historial */
+#oneHistory, #zeroHistory {
+    background: rgba(255, 255, 255, 0.9); /* Fondo semitransparente */
+    color: #333333;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+#oneHistory p, #zeroHistory p {
+    font-size: 0.95rem;
+    margin: 8px 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+#oneHistory p:last-child, #zeroHistory p:last-child {
+    border-bottom: none;
+}
+
+/* Animación para el historial al cargar */
+#oneHistory, #zeroHistory {
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Fondo animado */
+body:before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%);
+    animation: moveBackground 10s infinite alternate ease-in-out;
+    z-index: -1;
+}
+
+@keyframes moveBackground {
+    from {
+        transform: translate(0, 0);
+    }
+    to {
+        transform: translate(-20px, -20px);
+    }
+}
