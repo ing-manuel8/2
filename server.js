@@ -1,9 +1,17 @@
 const express = require('express');
 const path = require('path');
 const app = express();
+const port = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, 'public'))); // 'public' es donde están tus archivos HTML/JS
+// Servir los archivos estáticos de la carpeta 'public'
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.listen(3000, () => {
-    console.log('Servidor en el puerto 3000');
+// Ruta principal para servir el index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Iniciar el servidor
+app.listen(port, () => {
+  console.log(`Servidor corriendo en el puerto ${port}`);
 });
