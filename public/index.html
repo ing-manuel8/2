@@ -27,12 +27,13 @@
         <label for="timerInput">Ingrese el tiempo en minutos:</label>
         <input type="number" id="timerInput" min="1" placeholder="Minutos" />
         <button id="startTimerButton">Iniciar Temporizador</button>
+        <!-- Botón para pausar y continuar el temporizador -->
+        <button id="pauseResumeButton" aria-label="Pausar o continuar el temporizador">Pausar</button>
     </div>
 
-     <!-- Tiempo restante hasta el apagado -->
-     <h2>Tiempo Restante para Apagar el LED:</h2>
-     <p id="timeRemaining">Esperando...</p>
- 
+    <!-- Tiempo restante hasta el apagado -->
+    <h2>Tiempo Restante para Apagar el LED:</h2>
+    <p id="timeRemaining">Esperando...</p>
 
     <!-- Historiales de eventos -->
     <h2>Historial de encendido</h2>
@@ -50,10 +51,17 @@
     <p id="proximoApagado">Cargando próximo apagado...</p>
     <p id="proximoEncendido">Cargando próximo encendido...</p>
 
-   
     <!-- Agenda editable -->
     <h2>Agenda Semanal</h2>
-    <div id="agenda"></div>
+    <div id="agenda">
+        <!-- Se cargarán los intervalos de Firebase aquí -->
+        <p id="hora1">Hora 1: Cargando...</p>
+        <p id="hora2">Hora 2: Cargando...</p>
+        <p id="hora3">Hora 3: Cargando...</p>
+        <p id="hora4">Hora 4: Cargando...</p>
+        <p id="hora5">Hora 5: Cargando...</p>
+        <p id="hora6">Hora 6: Cargando...</p>
+    </div>
 </body>
 </html>
 

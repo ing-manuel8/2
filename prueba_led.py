@@ -36,8 +36,8 @@ ultimo_estado_led = None  # Último estado enviado a Firebase
 
 # Lista de intervalos de encendido
 intervalos = [
-    (13, 22, 13, 23),
-    (13, 24, 13, 25),
+    (8, 53, 8, 54),
+    (9, 42, 9, 44),
     (16, 11, 16, 12),
     (13, 0, 13, 5),
     (15, 0, 15, 5),
@@ -148,6 +148,28 @@ def enviar_mensaje_firebase(clave, valor):
     except Exception as e:
         print("Error al enviar mensaje a Firebase:", str(e))
 
+# Función para enviar todos los intervalos a Firebase
+def enviar_intervalos_individuales(intervalos):
+    try:
+        # Enviar cada intervalo con una clave numerada
+        for i, (inicio_h, inicio_m, fin_h, fin_m) in enumerate(intervalos, start=1):
+            intervalo_str = f"{inicio_h:02}:{inicio_m:02} - {fin_h:02}:{fin_m:02}"
+            clave = f"hora {i}"  # "hora 1", "hora 2", etc.
+            
+            # Enviar el intervalo a Firebase bajo la clave correspondiente
+            data = {clave: intervalo_str}
+            response = urequests.patch(f'{FIREBASE_URL}/intervalos.json?auth={AUTH}', json=data)
+            
+            if response.status_code == 200:
+                print(f"Intervalo {clave} enviado a Firebase: {intervalo_str}")
+            else:
+                print(f"Error al enviar intervalo {clave} a Firebase: {response.status_code}")
+            response.close()  # Liberar memoria
+    except Exception as e:
+        print("Error al enviar intervalos individuales a Firebase:", str(e))
+
+# Bucle principal para manejar el control del LED
+
 # Variable para almacenar el valor anterior de proximo_apagado
 ultimo_proximo_apagado = None
 # Variable para almacenar el valor anterior de proximo_apagado
@@ -157,6 +179,8 @@ primera_actualizacion = True  # Bandera para controlar la primera actualización
 # Bucle principal para manejar el control del LED
 try:
     while True:
+        
+
         # Obtener la hora actual
         hora, minuto = obtener_hora_actual()
         print(f"Hora actual: {hora:02}:{minuto:02}")

@@ -248,3 +248,30 @@ table th {
 }
 
 
+
+/* Asegúrate de que no haya estilos que oculten el botón */
+#pauseResumeButton {
+    display: inline-block; /* Asegúrate de que el botón esté visible */
+    visibility: visible; /* Que no esté oculto */
+    opacity: 1; /* Que no esté transparente */
+}
+
+
+.agenda-item {
+    background-color: #f0f0f0;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.agenda-item h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.agenda-item p {
+    margin: 5px 0;
+    color: #666;
+}
