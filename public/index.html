@@ -5,18 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <title>Sistema de Riego Automatizado</title>
-    <script type="module" src="app.js" defer></script>
 </head>
 <body>
     <h1>Sistema de Riego Automatizado</h1>
 
+    <!-- Hora actual -->
+    <p id="currentTime">Cargando hora actual...</p>
+
+    <!-- Texto que indica si el LED está Prendido o Apagado -->
     <p id="statusText">Cargando estado del LED...</p>
 
+    <!-- Botones para controlar el sistema -->
     <div class="button-container">
         <button id="toggleButton" aria-label="Controlar sistema de riego">Encender</button>
         <button id="deleteButton" aria-label="Eliminar historial completo">Eliminar todos los historiales</button>
     </div>
 
+    <!-- Temporizador para encender/apagar LED por tiempo específico -->
+    <h2>Temporizador para encender y apagar LED</h2>
+    <div>
+        <label for="timerInput">Ingrese el tiempo en minutos:</label>
+        <input type="number" id="timerInput" min="1" placeholder="Minutos" />
+        <button id="startTimerButton">Iniciar Temporizador</button>
+    </div>
+
+     <!-- Tiempo restante hasta el apagado -->
+     <h2>Tiempo Restante para Apagar el LED:</h2>
+     <p id="timeRemaining">Esperando...</p>
+ 
+
+    <!-- Historiales de eventos -->
     <h2>Historial de encendido</h2>
     <div id="oneHistory" aria-live="polite">
         <p>Cargando historial...</p>
@@ -27,8 +45,17 @@
         <p>Cargando historial...</p>
     </div>
 
+    <!-- Mostrar los mensajes de Firebase -->
     <h2>Próximo apagado y encendido</h2>
     <p id="proximoApagado">Cargando próximo apagado...</p>
     <p id="proximoEncendido">Cargando próximo encendido...</p>
+
+   
+    <!-- Agenda editable -->
+    <h2>Agenda Semanal</h2>
+    <div id="agenda"></div>
 </body>
 </html>
+
+<script type="module" src="app.js" defer></script>
+<script type="module" src="timerControl.js" defer></script>

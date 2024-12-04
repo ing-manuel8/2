@@ -1,8 +1,7 @@
-// app.js
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
 import { getDatabase, ref, set, push, get, remove } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
 
-// Configura Firebase
+// Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCH68ou5-6yxPrImHZw54iP281e6h3V1AQ",
     authDomain: "esp32robot-165bc.firebaseapp.com",
@@ -18,123 +17,200 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
-let value = 0;
+// Estado inicial del valor del LED (0 o 1)
+let ledStatusValue = 0;
+let remainingTime = 0;  // Tiempo restante en segundos
+let timerInterval = null;  // Intervalo del temporizador
 
 function getFormattedDate() {
     const now = new Date();
-    const day = now.toLocaleDateString();
-    const time = now.toLocaleTimeString();
+    const day = now.toLocaleDateString();  // Día en formato "dd/mm/yyyy"
+    const time = now.toLocaleTimeString(); // Hora en formato "hh:mm:ss AM/PM"
     return { day, time };
 }
 
-function displayHistory() {
-    const zeroRef = ref(database, 'buttonHistory/zero');
-    const oneRef = ref(database, 'buttonHistory/one');
+// Actualizar la hora cada segundo
+function updateCurrentTime() {
+    const currentTime = new Date().toLocaleTimeString(); // Obtener la hora actual
+    document.getElementById('currentTime').textContent = `Hora actual: ${currentTime}`;
+}
 
-    // Obtener y mostrar el historial para el valor 0
-    get(zeroRef).then(snapshot => {
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            let zeroHistory = '';
-            const sortedZeroData = Object.entries(data).reverse();
-            sortedZeroData.forEach(([key, value]) => {
-                zeroHistory += `<p> Fecha: ${value.date}, Hora: ${value.time}</p>`;
-            });
-            document.getElementById('zeroHistory').innerHTML = zeroHistory;
-        } else {
-            document.getElementById('zeroHistory').innerHTML = '<p>No hay historial para el valor 0.</p>';
-        }
-    });
+setInterval(updateCurrentTime, 1000); // Actualizar cada segundo
 
-    // Obtener y mostrar el historial para el valor 1
-    get(oneRef).then(snapshot => {
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            let oneHistory = '';
-            const sortedOneData = Object.entries(data).reverse();
-            sortedOneData.forEach(([key, value]) => {
-                oneHistory += `<p> Fecha: ${value.date}, Hora: ${value.time}</p>`;
-            });
-            document.getElementById('oneHistory').innerHTML = oneHistory;
-        } else {
-            document.getElementById('oneHistory').innerHTML = '<p>No hay historial para el valor 1.</p>';
-        }
+// Función para guardar el historial en Firebase
+function saveHistory(value) {
+    const { day, time } = getFormattedDate();
+    const historyRef = ref(database, 'buttonHistory/' + (value === 0 ? 'zero' : 'one'));
+
+    // Limitar a 10 registros
+    limitRecords('buttonHistory/' + (value === 0 ? 'zero' : 'one'));
+
+    // Usamos `push` para crear un nuevo nodo único en Firebase
+    push(historyRef, {
+        value: value,
+        date: day,
+        time: time
     });
 }
 
+// Función para limitar a 10 los registros en Firebase
 function limitRecords(historyRef) {
+    // Obtener los últimos 10 registros
     const recordsRef = ref(database, historyRef);
-    get(recordsRef).then(snapshot => {
+    get(recordsRef).then((snapshot) => {
         if (snapshot.exists()) {
             const data = snapshot.val();
             const records = Object.entries(data);
+
+            // Si hay más de 10 registros, eliminar el más antiguo
             if (records.length >= 10) {
-                const oldestKey = records[0][0];
-                const oldestRef = ref(database, `${historyRef}/${oldestKey}`);
+                const oldestKey = records[0][0]; // Obtener la clave del registro más antiguo
+                const oldestRef = ref(database, historyRef + '/' + oldestKey);
                 remove(oldestRef).then(() => {
                     console.log('Registro más antiguo eliminado');
-                }).catch(error => {
+                }).catch((error) => {
                     console.error('Error al eliminar el registro más antiguo:', error);
                 });
             }
         }
-    }).catch(error => {
-        console.error('Error al obtener los registros:', error);
+    }).catch((error) => {
+        console.error('Error al obtener los registros para limitar:', error);
     });
 }
 
-function saveHistory(value) {
-    const { day, time } = getFormattedDate();
-    const historyRef = ref(database, 'buttonHistory/' + (value === 0 ? 'zero' : 'one'));
-    limitRecords('buttonHistory/' + (value === 0 ? 'zero' : 'one'));
-    push(historyRef, { value, date: day, time: time });
+// Función para mostrar el historial en la página, de más reciente a más antiguo
+function displayHistory() {
+    const zeroRef = ref(database, 'buttonHistory/zero');
+    const oneRef = ref(database, 'buttonHistory/one');
+
+    // Mostrar los datos para el valor 0
+    get(zeroRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            let zeroHistory = '';
+            const sortedZeroData = Object.entries(data).reverse();  // Ordenar de más reciente a más antiguo
+
+            for (const [key, value] of sortedZeroData) {
+                zeroHistory += `<p> Fecha: ${value.date}, Hora: ${value.time}</p>`;
+            }
+            document.getElementById('zeroHistory').innerHTML = zeroHistory;
+        } else {
+            document.getElementById('zeroHistory').innerHTML = '<p>No hay historial para el valor 0.</p>';
+        }
+    }).catch((error) => {
+        console.error('Error al obtener los datos de "zero":', error);
+    });
+
+    // Mostrar los datos para el valor 1
+    get(oneRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            let oneHistory = '';
+            const sortedOneData = Object.entries(data).reverse();  // Ordenar de más reciente a más antiguo
+
+            for (const [key, value] of sortedOneData) {
+                oneHistory += `<p> Fecha: ${value.date}, Hora: ${value.time}</p>`;
+            }
+            document.getElementById('oneHistory').innerHTML = oneHistory;
+        } else {
+            document.getElementById('oneHistory').innerHTML = '<p>No hay historial para el valor 1.</p>';
+        }
+    }).catch((error) => {
+        console.error('Error al obtener los datos de "one":', error);
+    });
 }
 
+// Función para obtener el estado de 'ledStatus' y actualizar el botón
 function updateButtonBasedOnLedStatus() {
     const ledStatusRef = ref(database, 'ledStatus');
     const toggleButton = document.getElementById('toggleButton');
-    const statusText = document.getElementById('statusText');
-    
-    get(ledStatusRef).then(snapshot => {
+
+    get(ledStatusRef).then((snapshot) => {
         if (snapshot.exists()) {
-            const ledStatus = snapshot.val();
-            toggleButton.textContent = ledStatus === 1 ? 'Apagar' : 'Encender';
-            statusText.textContent = ledStatus === 1 ? 'El LED está Prendido' : 'El LED está Apagado';
+            ledStatusValue = snapshot.val();
+            toggleButton.textContent = ledStatusValue === 0 ? 'Encender' : 'Apagar';
+        } else {
+            toggleButton.textContent = 'Encender';
         }
-    }).catch(error => {
+    }).catch((error) => {
         console.error('Error al obtener el estado del LED:', error);
     });
 }
 
-const toggleButton = document.getElementById('toggleButton');
-const deleteButton = document.getElementById('deleteButton');
+// Función para actualizar el tiempo restante
+function updateRemainingTime() {
+    const minutes = Math.floor(remainingTime / 60);
+    const seconds = remainingTime % 60;
+    document.getElementById('timeRemaining').textContent = `Tiempo restante: ${minutes}m ${seconds}s`;
 
-toggleButton.addEventListener('click', () => {
-    value = (value === 0) ? 1 : 0;
+    if (remainingTime <= 0) {
+        clearInterval(timerInterval);
+        set(ref(database, 'ledStatus'), 0); // Apagar el LED en Firebase
+        document.getElementById('statusText').textContent = 'El LED está Apagado';
+        saveHistory(0);  // Guardar el historial de apagado
+    } else {
+        remainingTime--;
+    }
+}
+
+// Función para controlar el temporizador del LED
+function startTimerForLed() {
+    const timeInput = document.getElementById('timerInput').value;  // Obtener el tiempo en minutos desde el input
+    const ledStatusRef = ref(database, 'ledStatus');
+    const statusText = document.getElementById('statusText');
+    remainingTime = timeInput * 60;  // Convertir el tiempo a segundos
+
+    if (timeInput && !isNaN(timeInput) && timeInput > 0) {
+        // Encender el LED
+        set(ledStatusRef, 1);
+        statusText.textContent = `El LED está Prendido por ${timeInput} minutos`;
+
+        // Guardar el historial
+        saveHistory(1);
+
+        // Iniciar el temporizador
+        if (timerInterval) clearInterval(timerInterval); // Limpiar cualquier intervalo previo
+        timerInterval = setInterval(updateRemainingTime, 1000);  // Actualizar cada segundo
+    } else {
+        alert('Por favor, ingresa un valor válido de tiempo (en minutos)');
+    }
+}
+
+// Event listeners
+document.getElementById('toggleButton').addEventListener('click', () => {
+    ledStatusValue = (ledStatusValue === 0) ? 1 : 0;
     const buttonRef = ref(database, 'ledStatus');
-    set(buttonRef, value);
-    saveHistory(value);
-    toggleButton.textContent = value === 0 ? 'Encender' : 'Apagar';
-    displayHistory();
+    set(buttonRef, ledStatusValue);  // Guardar el valor en Firebase
+    saveHistory(ledStatusValue);      // Guardar el historial cuando se cambia el valor del LED
+    document.getElementById('toggleButton').textContent = ledStatusValue === 0 ? 'Encender' : 'Apagar';
+    displayHistory();        // Actualizar el historial mostrado en la página
 });
 
-deleteButton.addEventListener('click', () => {
+document.getElementById('startTimerButton').addEventListener('click', startTimerForLed);
+
+document.getElementById('deleteButton').addEventListener('click', () => {
     const zeroRef = ref(database, 'buttonHistory/zero');
     const oneRef = ref(database, 'buttonHistory/one');
+
     remove(zeroRef).then(() => {
         console.log('Historial de valores 0 eliminado');
-    }).catch(error => {
+        document.getElementById('zeroHistory').innerHTML = '<p>No hay historial para el valor 0.</p>';
+    }).catch((error) => {
         console.error('Error al eliminar el historial de valores 0:', error);
     });
+
     remove(oneRef).then(() => {
         console.log('Historial de valores 1 eliminado');
-    }).catch(error => {
+        document.getElementById('oneHistory').innerHTML = '<p>No hay historial para el valor 1.</p>';
+    }).catch((error) => {
         console.error('Error al eliminar el historial de valores 1:', error);
     });
 });
 
+// Mostrar el historial y el estado del LED al cargar la página
 window.onload = function() {
-    displayMessages();
-    displayHistory();
-    updateButtonBasedOnLedStatus();
+    displayHistory();       // Mostrar el historial de botones
+    updateButtonBasedOnLedStatus();  // Actualizar el texto del botón y el estado del LED
 };
+
+
