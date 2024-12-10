@@ -275,3 +275,35 @@ table th {
     margin: 5px 0;
     color: #666;
 }
+
+
+/* Hora grande y llamativa */
+.large-time {
+    font-size: 4rem; /* Aumentar tamaño de la fuente */
+    font-weight: bold;
+    color: #ffeb3b; /* Amarillo brillante para llamar la atención */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Sombra para destacar */
+    text-align: center;
+    margin: 20px 0; /* Espaciado */
+}
+
+/* Estado del LED llamativo */
+.status-text {
+    font-size: 2rem; /* Más grande que el texto normal */
+    font-weight: bold;
+    text-align: center;
+    color: #ffffff; /* Blanco para resaltar sobre el fondo */
+    background: linear-gradient(135deg, #b5cfa5, #4c8d9a); /* Degradado llamativo */
+    border-radius: 10px; /* Bordes redondeados */
+    padding: 10px 20px; /* Espaciado interno */
+    display: inline-block; /* Tamaño ajustado al contenido */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Sombra */
+    margin-top: 20px;
+}
+    
+
+
+
+
+
+

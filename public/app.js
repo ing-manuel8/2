@@ -389,13 +389,393 @@ function loadIntervalos() {
 }
 
 
+// Función para agregar una nueva hora a la agenda y programar encendido/apagado
+function addNewHourAndSchedule(startTime, endTime) {
+    const agendaRef = ref(database, 'intervalos'); // Ruta en Firebase para intervalos
+    const agendaContainer = document.getElementById('agenda'); // Contenedor de la agenda en HTML
+
+    get(agendaRef).then((snapshot) => {
+        let intervalos = {};
+
+        if (snapshot.exists()) {
+            intervalos = snapshot.val(); // Obtener los intervalos existentes
+        }
+
+        // Agregar el nuevo horario a los intervalos existentes
+        const newIntervalos = { ...intervalos, [`hora${Object.keys(intervalos).length + 1}`]: `${startTime} a ${endTime}` };
+
+        // Ordenar los intervalos por la hora de inicio
+        const sortedIntervalos = Object.entries(newIntervalos).sort(([, a], [, b]) => {
+            const [startA] = a.split(' a ');
+            const [startB] = b.split(' a ');
+            return startA.localeCompare(startB); // Ordenar alfabéticamente por hora
+        });
+
+        // Guardar los intervalos ordenados en Firebase
+        const updatedIntervalos = Object.fromEntries(sortedIntervalos);
+        set(agendaRef, updatedIntervalos).then(() => {
+            console.log('Intervalos actualizados en Firebase.');
+
+            // Actualizar dinámicamente la Agenda Semanal en el HTML
+            agendaContainer.innerHTML = ''; // Limpiar la agenda
+            sortedIntervalos.forEach(([key, value]) => {
+                // Crear el elemento del intervalo
+                const intervalElement = document.createElement('div');
+                intervalElement.id = key;
+                intervalElement.classList.add('interval');
+
+                // Texto del intervalo
+                const intervalText = document.createElement('p');
+                intervalText.textContent = `${key}: ${value}`;
+
+                // Botón para eliminar el intervalo
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.addEventListener('click', () => deleteInterval(key));
+
+                // Agregar el texto y el botón al elemento del intervalo
+                intervalElement.appendChild(intervalText);
+                intervalElement.appendChild(deleteButton);
+
+                // Agregar el elemento del intervalo al contenedor de la agenda
+                agendaContainer.appendChild(intervalElement);
+            });
+
+            // Programar el control del LED para el nuevo intervalo
+            scheduleLedControl(startTime, endTime, key);
+        }).catch((error) => {
+            console.error('Error al actualizar los intervalos en Firebase:', error);
+        });
+    }).catch((error) => {
+        console.error('Error al obtener la agenda:', error);
+    });
+}
+
+
+// Función para programar encendido/apagado y eliminar del HTML al final del intervalo
+function scheduleLedControl(startTime, endTime, intervalKey) {
+    const ledStatusRef = ref(database, 'ledStatus'); // Ruta en Firebase para estado del LED
+    const agendaContainer = document.getElementById('agenda'); // Contenedor de la agenda en HTML
+
+    // Obtener la hora actual en formato HH:mm
+    const getCurrentTime = () => {
+        const now = new Date();
+        return now.toTimeString().slice(0, 5); // Obtener solo HH:mm
+    };
+
+    // Monitorear cada minuto para comprobar si coincide con el inicio o fin
+    const intervalCheck = setInterval(() => {
+        const currentTime = getCurrentTime();
+
+        if (currentTime === startTime) {
+            console.log(`Encendiendo LED a las ${currentTime}`);
+            set(ledStatusRef, 1)
+                .then(() => saveHistory(1)) // Guardar en el historial
+                .catch((error) => console.error('Error al encender el LED:', error));
+        }
+
+        if (currentTime === endTime) {
+            console.log(`Apagando LED a las ${currentTime}`);
+            set(ledStatusRef, 0)
+                .then(() => saveHistory(0)) // Guardar en el historial
+                .catch((error) => console.error('Error al apagar el LED:', error));
+
+            // Eliminar el intervalo de Firebase y del HTML
+            const intervalRef = ref(database, `intervalos/${intervalKey}`);
+            remove(intervalRef).then(() => {
+                console.log(`Intervalo ${intervalKey} eliminado de Firebase.`);
+            }).catch((error) => {
+                console.error('Error al eliminar el intervalo de Firebase:', error);
+            });
+
+            // Eliminar el intervalo del HTML
+            const intervalElement = document.getElementById(intervalKey);
+            if (intervalElement) {
+                agendaContainer.removeChild(intervalElement);
+            }
+
+            // Detener el intervalo de monitoreo
+            clearInterval(intervalCheck);
+        }
+    }, 60000); // Verificar cada minuto
+}
+
+// Evento para agregar una nueva hora
+document.getElementById('addHourButton').addEventListener('click', () => {
+    const startHourInput = document.getElementById('startHour').value;
+    const endHourInput = document.getElementById('endHour').value;
+
+    if (startHourInput && endHourInput) {
+        addNewHourAndSchedule(startHourInput, endHourInput); // Llama a la función para agregar y programar
+    } else {
+        alert('Por favor, ingresa una hora de inicio y fin válidas.');
+    }
+});
+
+// Función para eliminar un intervalo por su clave
+function deleteInterval(intervalKey) {
+    const intervalRef = ref(database, `intervalos/${intervalKey}`); // Ruta al intervalo en Firebase
+    const agendaContainer = document.getElementById('agenda'); // Contenedor de la agenda en HTML
+
+    // Eliminar el intervalo de Firebase
+    remove(intervalRef)
+        .then(() => {
+            console.log(`Intervalo ${intervalKey} eliminado de Firebase.`);
+
+            // Eliminar el intervalo del HTML
+            const intervalElement = document.getElementById(intervalKey);
+            if (intervalElement) {
+                agendaContainer.removeChild(intervalElement);
+            }
+        })
+        .catch((error) => {
+            console.error('Error al eliminar el intervalo de Firebase:', error);
+        });
+}
+
+
+
+// Función para cargar y mostrar los intervalos existentes al cargar la página
+function loadAndDisplayIntervals() {
+    const agendaRef = ref(database, 'intervalos'); // Ruta en Firebase para los intervalos
+    const agendaContainer = document.getElementById('agenda'); // Contenedor de la agenda en HTML
+
+    get(agendaRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const intervalos = snapshot.val(); // Obtener los intervalos existentes
+
+            // Limpiar la agenda antes de renderizar
+            agendaContainer.innerHTML = '';
+
+            // Renderizar cada intervalo
+            Object.entries(intervalos).forEach(([key, value]) => {
+                // Crear el elemento del intervalo
+                const intervalElement = document.createElement('div');
+                intervalElement.id = key;
+                intervalElement.classList.add('interval');
+
+                // Texto del intervalo
+                const intervalText = document.createElement('p');
+                intervalText.textContent = `${key}: ${value}`;
+
+                // Botón para eliminar el intervalo
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.addEventListener('click', () => deleteInterval(key));
+
+                // Botón para editar el intervalo
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Editar';
+                editButton.addEventListener('click', () => enableEditInterval(key, value));
+
+                // Agregar el texto y los botones al elemento del intervalo
+                intervalElement.appendChild(intervalText);
+                intervalElement.appendChild(editButton); // Agregar el botón de editar
+                intervalElement.appendChild(deleteButton);
+
+                // Agregar el elemento del intervalo al contenedor de la agenda
+                agendaContainer.appendChild(intervalElement);
+            });
+        } else {
+            agendaContainer.innerHTML = '<p>No hay horarios programados.</p>';
+        }
+    }).catch((error) => {
+        console.error('Error al cargar los intervalos desde Firebase:', error);
+    });
+}
+
+
+
+// Función para habilitar la edición de un horario
+function enableEditInterval(intervalKey, currentInterval) {
+    const agendaRef = ref(database, `intervalos/${intervalKey}`); // Ruta en Firebase para el intervalo
+    const intervalElement = document.getElementById(intervalKey); // Elemento del intervalo en el HTML
+
+    // Dividir el intervalo actual en hora de inicio y fin
+    const [currentStartTime, currentEndTime] = currentInterval.split(' a ');
+
+    // Limpiar el contenido actual del intervalo
+    intervalElement.innerHTML = '';
+
+    // Crear campos de texto para la edición
+    const startInput = document.createElement('input');
+    startInput.type = 'time';
+    startInput.value = currentStartTime;
+
+    const endInput = document.createElement('input');
+    endInput.type = 'time';
+    endInput.value = currentEndTime;
+
+    // Crear botón para guardar los cambios
+    const saveButton = document.createElement('button');
+    saveButton.textContent = 'Guardar';
+    saveButton.addEventListener('click', () => {
+        const newStartTime = startInput.value;
+        const newEndTime = endInput.value;
+
+        // Validar que las horas sean correctas
+        if (newStartTime && newEndTime && newStartTime < newEndTime) {
+            // Actualizar el intervalo en Firebase
+            set(agendaRef, `${newStartTime} a ${newEndTime}`)
+                .then(() => {
+                    console.log(`Intervalo ${intervalKey} actualizado a ${newStartTime} a ${newEndTime}`);
+                    loadAndDisplayIntervals(); // Recargar la lista de intervalos en la UI
+                })
+                .catch((error) => {
+                    console.error('Error al actualizar el intervalo:', error);
+                });
+        } else {
+            alert('Horas inválidas o incompletas. Por favor, intente nuevamente.');
+        }
+    });
+
+    // Crear botón para cancelar la edición
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancelar';
+    cancelButton.addEventListener('click', () => {
+        loadAndDisplayIntervals(); // Recargar la lista de intervalos en la UI sin guardar cambios
+    });
+
+    // Agregar los campos y botones al elemento del intervalo
+    intervalElement.appendChild(startInput);
+    intervalElement.appendChild(document.createTextNode(' a '));
+    intervalElement.appendChild(endInput);
+    intervalElement.appendChild(saveButton);
+    intervalElement.appendChild(cancelButton);
+}
+
+function checkAndUpdateLedStatus() {
+    const agendaRef = ref(database, 'intervalos'); // Ruta en Firebase para los intervalos
+    const ledStatusRef = ref(database, 'ledStatus'); // Ruta en Firebase para el estado del LED
+    const cancelButtonContainer = document.getElementById('cancelButtonContainer'); // Contenedor del botón de cancelar
+
+    let lastSentStatus = null; // Para evitar enviar repetidamente el mismo estado
+    let manuallyStopped = false; // Bandera para saber si el usuario apagó el LED manualmente
+
+    // Obtener la hora actual en formato HH:mm
+    const getCurrentTime = () => {
+        const now = new Date();
+        return now.toTimeString().slice(0, 5); // Obtener solo HH:mm
+    };
+
+    // Monitorear cada segundo
+    setInterval(() => {
+        const currentTime = getCurrentTime();
+
+        get(agendaRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                const intervalos = snapshot.val(); // Obtener los intervalos existentes
+
+                let ledShouldBeOn = false; // Bandera para saber si el LED debe estar encendido por horario
+                let shouldSendZero = false; // Bandera para enviar 0 solo al final del intervalo
+
+                // Recorrer cada intervalo para verificar el inicio o fin
+                Object.values(intervalos).forEach((interval) => {
+                    const [startTime, endTime] = interval.split(' a '); // Separar inicio y fin
+
+                    if (currentTime >= startTime && currentTime < endTime) {
+                        ledShouldBeOn = true; // Dentro del intervalo: Mantener encendido
+                        cancelButtonContainer.style.display = 'block'; // Mostrar el botón
+                    }
+                    if (currentTime === endTime) {
+                        shouldSendZero = true; // Hora de fin: Enviar 0
+                    }
+                });
+
+                // Verificar el estado actual del LED
+                get(ledStatusRef).then((ledSnapshot) => {
+                    const currentLedStatus = ledSnapshot.exists() ? ledSnapshot.val() : 0;
+
+                    if (ledShouldBeOn && !manuallyStopped && currentLedStatus === 0 && lastSentStatus !== 1) {
+                        // Encender el LED solo una vez al inicio del intervalo
+                        set(ledStatusRef, 1)
+                            .then(() => {
+                                console.log('LED encendido automáticamente dentro del horario.');
+                                lastSentStatus = 1; // Actualizar el último estado enviado
+                                manuallyStopped = false; // Reiniciar bandera de apagado manual
+                            })
+                            .catch((error) => console.error('Error al encender el LED automáticamente:', error));
+                    } else if (shouldSendZero && currentLedStatus === 1 && lastSentStatus !== 0) {
+                        // Apagar el LED solo una vez al final del intervalo
+                        set(ledStatusRef, 0)
+                            .then(() => {
+                                console.log('LED apagado automáticamente al final del horario.');
+                                lastSentStatus = 0; // Actualizar el último estado enviado
+                                cancelButtonContainer.style.display = 'none'; // Ocultar el botón
+                            })
+                            .catch((error) => console.error('Error al apagar el LED automáticamente:', error));
+                    }
+
+                    if (!ledShouldBeOn && !shouldSendZero) {
+                        cancelButtonContainer.style.display = 'none'; // Ocultar el botón si no hay intervalos activos
+                    }
+                }).catch((error) => {
+                    console.error('Error al obtener el estado actual del LED:', error);
+                });
+            } else {
+                console.log('No hay intervalos configurados.');
+                cancelButtonContainer.style.display = 'none'; // Ocultar el botón si no hay intervalos configurados
+            }
+        }).catch((error) => {
+            console.error('Error al verificar los intervalos:', error);
+        });
+    }, 1000); // Verificar cada segundo
+
+    // Monitorear el evento de clic en el botón de "Parar Tiempo Automático"
+    const cancelButton = document.getElementById('cancelAutomaticButton');
+    cancelButton.addEventListener('click', () => {
+        console.log('Parar Tiempo Automático: Desactivando el inicio automático.');
+        
+        // Apagar el LED manualmente y desactivar automático para este intervalo
+        set(ledStatusRef, 0)
+            .then(() => {
+                console.log('LED apagado manualmente. No se encenderá automáticamente hasta el próximo intervalo.');
+                manuallyStopped = true; // Activar bandera de apagado manual
+                cancelButtonContainer.style.display = 'none'; // Ocultar el botón
+            })
+            .catch((error) => {
+                console.error('Error al apagar manualmente el LED:', error);
+            });
+    });
+}
+
+
+
+// Función para manejar el botón de "Parar Tiempo Automático"
+function stopAutomaticTime() {
+    const cancelButtonContainer = document.getElementById('cancelButtonContainer'); // Contenedor del botón
+    const cancelButton = document.getElementById('cancelAutomaticButton'); // Botón de cancelar
+
+    // Monitorear el evento de clic en el botón
+    cancelButton.addEventListener('click', () => {
+        console.log('Parar Tiempo Automático: Desactivando el inicio automático.');
+        
+        // Actualizar el estado en Firebase a 0 para indicar apagado manual
+        set(ref(database, 'ledStatus'), 0)
+            .then(() => {
+                console.log('LED apagado manualmente. No se encenderá automáticamente hasta el próximo intervalo.');
+                cancelButtonContainer.style.display = 'none'; // Ocultar el botón
+            })
+            .catch((error) => {
+                console.error('Error al apagar manualmente el LED:', error);
+            });
+    });
+}
+
+
+
+
+
 // Llamar a la función loadNextOnOff al cargar la página
 window.onload = function() {
+    loadAndDisplayIntervals(); // Cargar y mostrar los intervalos existentes
     loadNextOnOff();  // Cargar los próximos eventos de encendido y apagado
     loadTimerState();  // Cargar el estado del temporizador desde Firebase
     displayHistory();   // Mostrar el historial de botones
     updateButtonBasedOnLedStatus();  // Actualizar el texto del botón y el estado del LED
-    loadIntervalos()
+    checkAndUpdateLedStatus(); // Verificar y actualizar automáticamente el estado del LED
+    toggleLedManually()
+    stopAutomaticTime()
 };
 
 

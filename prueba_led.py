@@ -5,7 +5,11 @@ from machine import Pin
 
 # Configuración WiFi
 SSID = 'UNIFI-ITSA'
-PASSWORD = ''  # Si tienes contraseña
+PASSWORD = ''
+import network
+import time
+import urequests as urequests
+from machine import Pin
 
 # Conexión WiFi
 def connect_wifi(SSID, PASSWORD):
@@ -26,7 +30,9 @@ FIREBASE_URL = 'https://esp32robot-165bc-default-rtdb.firebaseio.com/'
 AUTH = 'ftfOcG1nY6ZujnnxgvwFv7Y0TRprB4BffQcceUbL'  # Si no tienes auth, deja este string vacío
 
 # Inicializar LED
-led = Pin(2, Pin.OUT)
+d27 = Pin(27, Pin.IN)
+led = Pin(13, Pin.OUT)
+
 led.value(0)  # Asegurar que el LED inicie apagado
 
 # Variables globales
@@ -167,6 +173,19 @@ def enviar_intervalos_individuales(intervalos):
             response.close()  # Liberar memoria
     except Exception as e:
         print("Error al enviar intervalos individuales a Firebase:", str(e))
+        
+def enviar_mensaje_firebase(clave, valor):
+    try:
+        data = {clave: valor}
+        response = urequests.patch(f'{FIREBASE_URL}/messages.json?auth={AUTH}', json=data)
+        if response.status_code == 200:
+            print(f"Mensaje enviado a Firebase: {clave} -> {valor}")
+        else:
+            print(f"Error al enviar mensaje a Firebase: {response.status_code}")
+        response.close()  # Liberar memoria
+    except Exception as e:
+        print("Error al enviar mensaje a Firebase:", str(e))
+
 
 # Bucle principal para manejar el control del LED
 
@@ -178,7 +197,15 @@ primera_actualizacion = True  # Bandera para controlar la primera actualización
 
 # Bucle principal para manejar el control del LED
 try:
+    ultimo_d27 = d27.value()  # Almacenar el estado inicial de D27
+    if d27.value() == 1:
+        print("D27 tiene valor 1 al iniciar. Enviando mensaje a Firebase.")
+        enviar_mensaje_firebase("estado", "ESP32 conectado")
     while True:
+        
+        if d27.value() == 1:
+            print("d27 tiene valor 1. Deteniendo el programa principal.")
+            break
         
 
         # Obtener la hora actual

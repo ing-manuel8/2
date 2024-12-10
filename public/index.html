@@ -54,13 +54,26 @@
     <!-- Agenda editable -->
     <h2>Agenda Semanal</h2>
     <div id="agenda">
-        <!-- Se cargarán los intervalos de Firebase aquí -->
-        <p id="hora1">Hora 1: Cargando...</p>
-        <p id="hora2">Hora 2: Cargando...</p>
-        <p id="hora3">Hora 3: Cargando...</p>
-        <p id="hora4">Hora 4: Cargando...</p>
-        <p id="hora5">Hora 5: Cargando...</p>
-        <p id="hora6">Hora 6: Cargando...</p>
+        <p id="hora1">Hora 1: 7:00 a 7:05</p>
+        <p id="hora2">Hora 2: 9:00 a 9:05</p>
+        <p id="hora3">Hora 3: 11:00 a 11:05</p>
+        <p id="hora4">Hora 4: 13:00 a 13:05</p>
+        <p id="hora5">Hora 5: 15:00 a 15:05</p>
+        <p id="hora6">Hora 6: 17:00 a 17:05</p>
+    </div>
+
+        <!-- Botón para parar el tiempo automático -->
+    <div id="cancelButtonContainer" style="display: none;">
+        <button id="cancelAutomaticButton">Parar Tiempo Automático</button>
+    </div>
+    <!-- Botón para agregar una nueva hora -->
+    <h2>Agregar Nueva Hora</h2>
+    <div>
+        <label for="startHour">Hora de inicio:</label>
+        <input type="time" id="startHour" required>
+        <label for="endHour">Hora de fin:</label>
+        <input type="time" id="endHour" required>
+        <button id="addHourButton">Agregar Hora</button>
     </div>
 </body>
 </html>
