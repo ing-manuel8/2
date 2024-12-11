@@ -51,6 +51,20 @@ button:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Más sombra en hover */
 }
 
+#toggleButton, #deleteButton {
+    padding: 10px 20px; /* Botones más grandes */
+    font-size: 1.1rem; /* Aumenta el tamaño del texto */
+    border-radius: 5px; /* Bordes redondeados */
+    margin-top: 3rem;
+}
+h4{
+    margin-top: 4rem;
+}
+
+#cancelButtonContainer{
+    margin-top: 2rem;
+}
+
 #toggleButton {
     background: linear-gradient(135deg, #4caf50, #388e3c); /* Verde para el botón toggle */
 }
@@ -58,6 +72,37 @@ button:hover {
 #toggleButton:hover {
     background: linear-gradient(135deg, #388e3c, #2e7d32); /* Hover en verde */
 }
+
+#currentTime {
+    font-size: 1.8rem; /* Aumenta el tamaño de la fuente */
+    font-weight: bold; /* Negrita para destacarlo */
+    text-align: center; /* Centra el texto */
+    margin: 10px 0; /* Espaciado arriba y abajo */
+}
+
+#statusText {
+    font-size: 1.8rem; /* Aumenta el tamaño de la fuente */
+    font-weight: bold; /* Negrita */
+    color: #ffeb3b; /* Cambia el color a un amarillo llamativo */
+    text-align: center; /* Centra el texto */
+    margin: 10px 0; /* Espaciado */
+}
+
+h3 {
+    font-size: 2rem; /* Aumenta el tamaño de la fuente */
+    font-weight: bold; /* Negrita */
+    color: #ffffff; /* Asegúrate de que sea visible */
+    text-align: center; /* Centra el texto */
+    margin: 15px 0; /* Espaciado */
+}
+
+#proximoApagado, #proximoEncendido {
+    font-size: 1.6rem; /* Aumenta el tamaño de la fuente */
+    text-align: center; /* Centra el texto */
+    margin: 8px 0; /* Espaciado */
+}
+
+
 
 /* Estilo para el historial */
 #oneHistory, #zeroHistory {

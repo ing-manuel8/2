@@ -361,7 +361,7 @@ function loadIntervalos() {
             const intervalos = snapshot.val();  // Obtener los datos de 'intervalos'
             
             // Asignar los valores directamente a cada elemento
-            const horas = ['hora1', 'hora2', 'hora3', 'hora4', 'hora5', 'hora6'];
+            const horas = ['Hora_1', 'Hora_2', 'Hora_3', 'Hora_4', 'Hora_5', 'Hora_6'];
 
             // Iteramos sobre las horas predefinidas
             horas.forEach((hora, index) => {
@@ -383,7 +383,7 @@ function loadIntervalos() {
         console.error("Error al obtener los intervalos:", error);
         // Manejo de error, establecer 'Error al cargar' en las horas
         for (let i = 1; i <= 6; i++) {
-            document.getElementById(`hora${i}`).textContent = `Hora ${i}: Error al cargar`;
+            document.getElementById(`Hora${i}`).textContent = `Hora ${i}: Error al cargar`;
         }
     });
 }

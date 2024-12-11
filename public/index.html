@@ -1,82 +1,92 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Sistema de Riego Automatizado</title>
-</head>
-<body>
-    <h1>Sistema de Riego Automatizado</h1>
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="style.css">
+        <title>Sistema de Riego Automatizado</title>
+    </head>
+    <body>
+        <h1>Sistema de Riego Automatizado</h1>
 
-    <!-- Hora actual -->
-    <p id="currentTime">Cargando hora actual...</p>
+        <!-- Hora actual -->
+        <p id="currentTime">Cargando hora actual...</p>
 
-    <!-- Texto que indica si el LED está Prendido o Apagado -->
-    <p id="statusText">Cargando estado del LED...</p>
+        <!-- Texto que indica si el LED está Prendido o Apagado -->
+        <p id="statusText">Cargando estado del LED...</p>
 
-    <!-- Botones para controlar el sistema -->
-    <div class="button-container">
-        <button id="toggleButton" aria-label="Controlar sistema de riego">Encender</button>
-        <button id="deleteButton" aria-label="Eliminar historial completo">Eliminar todos los historiales</button>
-    </div>
+        <!-- Mostrar los mensajes de Firebase -->
+        <h3>Próximo apagado y encendido</h3>
+        <p id="proximoApagado">Cargando próximo apagado...</p>
+        <p id="proximoEncendido">Cargando próximo encendido...</p>
 
-    <!-- Temporizador para encender/apagar LED por tiempo específico -->
-    <h2>Temporizador para encender y apagar LED</h2>
-    <div>
-        <label for="timerInput">Ingrese el tiempo en minutos:</label>
-        <input type="number" id="timerInput" min="1" placeholder="Minutos" />
-        <button id="startTimerButton">Iniciar Temporizador</button>
-        <!-- Botón para pausar y continuar el temporizador -->
-        <button id="pauseResumeButton" aria-label="Pausar o continuar el temporizador">Pausar</button>
-    </div>
+                <!-- Agenda editable -->
+                <h2>Agenda Semanal</h2>
+                <div id="agenda">
+                    <p id="hora1">Hora 1: 7:00 a 7:05</p>
+                    <p id="hora2">Hora 2: 9:00 a 9:05</p>
+                    <p id="hora3">Hora 3: 11:00 a 11:05</p>
+                    <p id="hora4">Hora 4: 13:00 a 13:05</p>
+                    <p id="hora5">Hora 5: 15:00 a 15:05</p>
+                    <p id="hora6">Hora 6: 17:00 a 17:05</p>
+                </div>
+        
+                    <!-- Botón para parar el tiempo automático -->
+                <div id="cancelButtonContainer" style="display: none;">
+                    <button id="cancelAutomaticButton">Parar Tiempo Automático</button>
+                </div>
+                <!-- Botón para agregar una nueva hora -->
+                <h2>Agregar Nueva Hora</h2>
+                <div>
+                    <label for="startHour">Hora de inicio:</label>
+                    <input type="time" id="startHour" required>
+                    <label for="endHour">Hora de fin:</label>
+                    <input type="time" id="endHour" required>
+                    <button id="addHourButton">Agregar Hora</button>
+                </div>
 
-    <!-- Tiempo restante hasta el apagado -->
-    <h2>Tiempo Restante para Apagar el LED:</h2>
-    <p id="timeRemaining">Esperando...</p>
+        <!-- Botones para controlar el sistema -->
+        <div class="button-container">
+            <h4>Encendido manual</h4>
+            <button id="toggleButton" aria-label="Controlar sistema de riego">Encender</button>
+            <button id="deleteButton" aria-label="Eliminar historial completo">Eliminar todos los historiales</button>
+        </div>
 
-    <!-- Historiales de eventos -->
-    <h2>Historial de encendido</h2>
-    <div id="oneHistory" aria-live="polite">
-        <p>Cargando historial...</p>
-    </div>
+        <!-- Temporizador para encender/apagar LED por tiempo específico -->
+       
 
-    <h2>Historial de apagado</h2>
-    <div id="zeroHistory" aria-live="polite">
-        <p>Cargando historial...</p>
-    </div>
 
-    <!-- Mostrar los mensajes de Firebase -->
-    <h2>Próximo apagado y encendido</h2>
-    <p id="proximoApagado">Cargando próximo apagado...</p>
-    <p id="proximoEncendido">Cargando próximo encendido...</p>
 
-    <!-- Agenda editable -->
-    <h2>Agenda Semanal</h2>
-    <div id="agenda">
-        <p id="hora1">Hora 1: 7:00 a 7:05</p>
-        <p id="hora2">Hora 2: 9:00 a 9:05</p>
-        <p id="hora3">Hora 3: 11:00 a 11:05</p>
-        <p id="hora4">Hora 4: 13:00 a 13:05</p>
-        <p id="hora5">Hora 5: 15:00 a 15:05</p>
-        <p id="hora6">Hora 6: 17:00 a 17:05</p>
-    </div>
+        <!-- Historiales de eventos -->
+        <h2>Historial de encendido</h2>
+        <div id="oneHistory" aria-live="polite">
+            <p>Cargando historial...</p>
+        </div>
 
-        <!-- Botón para parar el tiempo automático -->
-    <div id="cancelButtonContainer" style="display: none;">
-        <button id="cancelAutomaticButton">Parar Tiempo Automático</button>
-    </div>
-    <!-- Botón para agregar una nueva hora -->
-    <h2>Agregar Nueva Hora</h2>
-    <div>
-        <label for="startHour">Hora de inicio:</label>
-        <input type="time" id="startHour" required>
-        <label for="endHour">Hora de fin:</label>
-        <input type="time" id="endHour" required>
-        <button id="addHourButton">Agregar Hora</button>
-    </div>
-</body>
-</html>
+        <h2>Historial de apagado</h2>
+        <div id="zeroHistory" aria-live="polite">
+            <p>Cargando historial...</p>
+        </div>
 
-<script type="module" src="app.js" defer></script>
-<script type="module" src="timerControl.js" defer></script>
+        
+
+
+        <h2>Temporizador para encender y apagar LED</h2>
+        <div>
+            <label for="timerInput">Ingrese el tiempo en minutos:</label>
+            <input type="number" id="timerInput" min="1" placeholder="Minutos" />
+            <button id="startTimerButton">Iniciar Temporizador</button>
+            <!-- Botón para pausar y continuar el temporizador -->
+            <button id="pauseResumeButton" aria-label="Pausar o continuar el temporizador">Pausar</button>
+        </div>
+
+                <!-- Tiempo restante hasta el apagado -->
+                <h2>Tiempo Restante para Apagar el LED:</h2>
+                <p id="timeRemaining">Esperando...</p>
+
+
+    </body>
+    </html>
+
+    <script type="module" src="app.js" defer></script>
+    <script type="module" src="timerControl.js" defer></script>
